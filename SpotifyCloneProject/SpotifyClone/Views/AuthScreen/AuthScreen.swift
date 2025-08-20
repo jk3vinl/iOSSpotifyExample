@@ -9,7 +9,9 @@ import SwiftUI
 
 struct AuthScreen: View {
   @StateObject var authViewModel: AuthViewModel
+  @ObservedObject var onboardingVM: OnboardingViewModel
   @State var isShowingAuthWebView = false
+  @State var isShowingOnboarding = false
 
   var body: some View {
     GeometryReader { geometry in
@@ -37,7 +39,7 @@ struct AuthScreen: View {
 
           VStack {
             RoundedButton(text: "SIGN UP FREE") {
-              isShowingAuthWebView = true
+              isShowingOnboarding = true
             }
               .padding(.bottom, 10)
 
@@ -64,6 +66,9 @@ struct AuthScreen: View {
         AuthSheetView(authViewModel: authViewModel,
                       isShowingSheetView: $isShowingAuthWebView)
       })
+      .fullScreenCover(isPresented: $isShowingOnboarding) {
+        OnboardingScreen(onboardingVM: onboardingVM)
+      }
     }
   }
 

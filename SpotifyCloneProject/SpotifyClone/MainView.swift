@@ -14,6 +14,7 @@ struct MainView: View {
   @StateObject var myLibraryVM: MyLibraryViewModel
   @StateObject var searchVM: SearchViewModel
   @StateObject var mediaDetailVM: MediaDetailViewModel
+  @StateObject var onboardingVM = OnboardingViewModel()
 
   @StateObject var activeSearchVM = ActiveSearchViewModel()
 
@@ -27,7 +28,7 @@ struct MainView: View {
   }
 
   var body: some View {
-    if mainVM.homeScreenIsReady {
+    if mainVM.homeScreenIsReady || onboardingVM.isOnboardingComplete {
       ZStack {
         Color.spotifyDarkGray.ignoresSafeArea()
         switch mainVM.currentPage {
@@ -47,13 +48,17 @@ struct MainView: View {
         }
         BottomBar(mainVM: mainVM, showMediaPlayer: mainVM.showBottomMediaPlayer)
       }
-      .onAppear { mainVM.getCurrentUserInfo() }
+      .onAppear { 
+        if mainVM.homeScreenIsReady {
+          mainVM.getCurrentUserInfo() 
+        }
+      }
       .onChange(of: mainVM.currentPage) { _ in cleanAllPages() }
       .onChange(of: mainVM.currentPageWasRetapped) { _ in goToNoneSubview() }
       .navigationBarTitle("")
       .navigationBarHidden(true)
     } else {
-      AuthScreen(authViewModel: AuthViewModel(mainViewModel: mainVM))
+      AuthScreen(authViewModel: AuthViewModel(mainViewModel: mainVM), onboardingVM: onboardingVM)
         .navigationBarTitle("")
         .navigationBarHidden(true)
     }
