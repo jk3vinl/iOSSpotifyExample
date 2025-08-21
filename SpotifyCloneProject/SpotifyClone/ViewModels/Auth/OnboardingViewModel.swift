@@ -17,6 +17,14 @@ class OnboardingViewModel: ObservableObject {
     @Published var selectedArtists: Set<String> = []
     @Published var isOnboardingComplete = false
     
+    private let analyticsManager = AnalyticsManager.shared
+    private let startTime = Date()
+    
+    init() {
+        // Track onboarding start
+        analyticsManager.trackOnboardingStarted()
+    }
+    
     // Sample artists for selection
     let availableArtists = [
         "Taylor Swift", "Drake", "The Weeknd", "Bad Bunny", "Ed Sheeran",
@@ -54,6 +62,18 @@ class OnboardingViewModel: ObservableObject {
     }
     
     func nextStep() {
+        // Track step completion
+        analyticsManager.trackOnboardingStepCompleted(step: currentStep, stepData: getStepData())
+        
+        // Track specific events
+        if currentStep == .email && !email.isEmpty {
+            analyticsManager.trackAccountCreated(email: email)
+        }
+        
+        if currentStep == .artists && selectedArtists.count == 3 {
+            analyticsManager.trackArtistSelectionCompleted(selectedArtists: Array(selectedArtists))
+        }
+        
         if currentStep.rawValue < OnboardingStep.allCases.count - 1 {
             currentStep = OnboardingStep(rawValue: currentStep.rawValue + 1) ?? .email
         } else {
@@ -94,9 +114,36 @@ class OnboardingViewModel: ObservableObject {
     }
     
     private func completeOnboarding() {
+        // Track onboarding completion
+        let completionTime = Date().timeIntervalSince(startTime)
+        let userData = OnboardingUserData(
+            email: email,
+            age: age,
+            name: name,
+            selectedArtists: Array(selectedArtists),
+            completionTime: completionTime
+        )
+        
+        analyticsManager.trackOnboardingCompleted(userData: userData)
+        
         // Here you would typically save the user data to your backend
         // For now, we'll just mark onboarding as complete
         isOnboardingComplete = true
+    }
+    
+    private func getStepData() -> [String: Any] {
+        switch currentStep {
+        case .email:
+            return ["email_length": email.count]
+        case .password:
+            return ["password_length": password.count, "has_special_chars": password.rangeOfCharacter(from: .punctuationCharacters) != nil]
+        case .age:
+            return ["age": age]
+        case .name:
+            return ["name_length": name.count]
+        case .artists:
+            return ["selected_count": selectedArtists.count]
+        }
     }
     
     func toggleArtist(_ artist: String) {
