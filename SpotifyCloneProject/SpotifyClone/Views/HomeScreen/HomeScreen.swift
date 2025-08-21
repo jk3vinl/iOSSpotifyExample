@@ -87,7 +87,17 @@ struct HomeScreen: View {
             .padding(.bottom, Constants.paddingBottomSection)
           }
           TopBar(animateOpacityWith: scrollViewPosition)
-
+          
+          // Analytics Dashboard Button (Development Only)
+          VStack {
+            Spacer()
+            HStack {
+              Spacer()
+              AnalyticsDashboard()
+                .padding(.trailing, 20)
+                .padding(.bottom, 100) // Above bottom bar
+            }
+          }
         }
       }
     }
